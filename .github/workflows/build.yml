@@ -1,40 +1,38 @@
-plugins {
-    id 'net.fabricmc.fabric-loom-remap' version '1.17.7'
-    id 'maven-publish'
-}
+name: Build Fabric Mod (1.21.11)
 
-version = project.mod_version
-group = project.maven_group
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
 
-base {
-    archivesName = project.archives_base_name
-}
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-repositories {
-    mavenCentral()
-}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc:fabric-api:${project.fabric_version}"
-}
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-processResources {
-    inputs.property "version", project.version
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12.1'
 
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
-}
+      - name: Build Mod JAR
+        run: gradle build
 
-tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
-}
-
-java {
-    withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
+      - name: Upload Mod Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluti-ai-helper-1.21.11
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
